@@ -21,7 +21,7 @@ app = Flask(__name__)
 
 # --- CONFIGURACIÓN DE ARCHIVOS ---
 # Ruta actualizada para apuntar a tu archivo Excel en la carpeta de Descargas
-EXCEL_FILE_PATH = r"C:\Users\Johan Bohorquez\Downloads\SIC_FACTURAS_UNE_VERSION_FINAL.xlsx" 
+EXCEL_FILE_PATH = "SIC_FACTURAS_UNE_VERSION_FINAL.xlsx"
 
 def detectar_tipo_mime(nombre):
     tipo, _ = mimetypes.guess_type(nombre)
