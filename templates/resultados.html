@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resultados para "{{ termino }}"</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-300 transition-colors duration-300"
+  >
+    <!-- Barra de Navegación Superior -->
+    <nav
+      class="bg-white dark:bg-slate-800 shadow-sm dark:border-b dark:border-slate-700 sticky top-0 z-10"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 flex items-center">
+            <i
+              data-lucide="search-check"
+              class="h-8 w-8 text-blue-600 dark:text-blue-500"
+            ></i>
+            <span
+              class="ml-2 text-xl font-bold text-gray-700 dark:text-gray-200"
+              >Resultados</span
+            >
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+            >
+              <i data-lucide="search" class="h-4 w-4 mr-2"></i>
+              Nueva Búsqueda
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="p-4 sm:p-6 lg:p-8">
+      <div class="max-w-8xl mx-auto">
+        <!-- Cabecera de Resultados -->
+        <div class="mb-8">
+          <p class="text-gray-600 dark:text-gray-400">
+            Resultados de la búsqueda para:
+          </p>
+          <h1
+            class="text-3xl font-bold text-blue-600 dark:text-blue-400 break-words"
+          >
+            "{{ termino }}"
+          </h1>
+        </div>
+
+        {% if error %}
+        <div
+          class="bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded-md"
+          role="alert"
+        >
+          <p class="font-bold">Error</p>
+          <p>{{ error }}</p>
+        </div>
+        {% elif resultados %}
+        <div class="mb-4">
+          <input
+            type="text"
+            id="filtroTabla"
+            placeholder="Filtrar por nombre o ruta..."
+            class="w-full sm:w-96 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200"
+          />
+        </div>
+        {% if volver_a %}
+        <div class="mb-6">
+          <a
+            href="{{ volver_a }}"
+            class="inline-flex items-center text-blue-600 dark:text-blue-400 text-sm hover:underline"
+          >
+            <i data-lucide="arrow-left" class="h-4 w-4 mr-1"></i>
+            Volver al Excel
+          </a>
+        </div>
+        {% endif %}
+        <!-- Tabla de Resultados -->
+        <div
+          class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-gray-200 dark:border-slate-700"
+        >
+          <table class="w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead
+              class="bg-gray-100 dark:bg-slate-700/50 text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold"
+            >
+              <tr>
+                <th class="px-6 py-3 text-left tracking-wider">
+                  Nombre del Archivo
+                </th>
+                <th class="px-6 py-3 text-left tracking-wider">Ruta</th>
+                <!-- NUEVA COLUMNA DE FECHA -->
+                <th class="px-6 py-3 text-left tracking-wider">
+                  Fecha Modificación
+                </th>
+                <th class="px-6 py-3 text-center tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody
+              class="divide-y divide-gray-200 dark:divide-slate-700 text-sm"
+            >
+              {% for item in resultados %}
+              <tr
+                class="hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-colors duration-200"
+              >
+                <td
+                  class="px-6 py-4 font-medium text-gray-800 dark:text-white max-w-xs truncate"
+                  title="{{ item.entry.name }}"
+                >
+                  {{ item.entry.name }}
+                </td>
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400 font-mono"
+                  title="{{ item.entry.path.name if item.entry.path is defined else 'Ruta no disponible' }}"
+                >
+                  {{ item.entry.path.name | truncate(80) if item.entry.path is
+                  defined else '—' }}
+                </td>
+                <!-- NUEVA CELDA CON LA FECHA FORMATEADA -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  {{ item.entry.modifiedAt | format_date }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex justify-center items-center space-x-2">
+                    {% if item.entry.isFolder %}
+                    <!-- 🔁 BOTÓN PARA VER CONTENIDO DE LA CARPETA -->
+                    <a
+                      href="{{ url_for('ver_contenido_carpeta', node_id=item.entry.id) }}"
+                      title="Ver contenido de la carpeta"
+                      class="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-slate-700 rounded-full transition-all"
+                    >
+                      <i data-lucide="folder-search" class="h-5 w-5"></i>
+                    </a>
+                    {% elif item.entry.isFile %}
+                    <!-- 👁️ Visualizar -->
+                    <a
+                      href="/view/{{ item.entry.id }}"
+                      target="_blank"
+                      title="Visualizar archivo"
+                      class="p-2 text-blue-600 dark:text-blue-500 hover:bg-blue-100 dark:hover:bg-slate-700 rounded-full transition-all"
+                    >
+                      <i data-lucide="eye" class="h-5 w-5"></i>
+                    </a>
+                    <!-- ⬇️ Descargar -->
+                    <a
+                      href="/download/{{ item.entry.id }}"
+                      title="Descargar archivo"
+                      class="p-2 text-green-600 dark:text-green-500 hover:bg-green-100 dark:hover:bg-slate-700 rounded-full transition-all"
+                    >
+                      <i data-lucide="download" class="h-5 w-5"></i>
+                    </a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <!-- ... (código de no resultados sin cambios) ... -->
+        <div class="text-center mt-12">
+          <div
+            class="inline-block p-4 bg-yellow-100 dark:bg-yellow-900/50 rounded-full"
+          >
+            <i data-lucide="search-x" class="h-12 w-12 text-yellow-500"></i>
+          </div>
+          <h2 class="mt-4 text-2xl font-bold text-gray-800 dark:text-white">
+            No se encontraron resultados
+          </h2>
+          <p class="mt-2 text-gray-600 dark:text-gray-400">
+            Intenta con otros términos de búsqueda.
+          </p>
+        </div>
+
+        {% endif %}
+      </div>
+    </main>
+
+    <script>
+      // ... (el script del modo oscuro no cambia y sigue siendo el robusto) ...
+      const themeToggleButton = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-icon");
+      const applyTheme = (isDark) => {
+        document.documentElement.classList.toggle("dark", isDark);
+        if (themeIcon)
+          themeIcon.setAttribute("data-lucide", isDark ? "sun" : "moon");
+        lucide.createIcons();
+      };
+      const initialIsDark =
+        localStorage.getItem("color-theme") === "dark" ||
+        (!("color-theme" in localStorage) &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      applyTheme(initialIsDark);
+      themeToggleButton.addEventListener("click", () => {
+        const isCurrentlyDark =
+          document.documentElement.classList.contains("dark");
+        localStorage.setItem(
+          "color-theme",
+          !isCurrentlyDark ? "dark" : "light"
+        );
+        applyTheme(!isCurrentlyDark);
+      });
+      lucide.createIcons();
+    </script>
+    <script>
+      const inputFiltro = document.getElementById("filtroTabla");
+      inputFiltro.addEventListener("keyup", function () {
+        const texto = inputFiltro.value.toLowerCase();
+        const filas = document.querySelectorAll("table tbody tr");
+
+        filas.forEach((fila) => {
+          const nombre = fila.cells[0]?.innerText.toLowerCase() || "";
+          const ruta = fila.cells[1]?.innerText.toLowerCase() || "";
+          const coincide = nombre.includes(texto) || ruta.includes(texto);
+          fila.style.display = coincide ? "" : "none";
+        });
+      });
+    </script>
+  </body>
+</html>

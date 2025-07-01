@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros de Contratos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-300 scroll-smooth transition-colors duration-300">
+
+    <!-- Barra de Navegación Superior -->
+    <nav class="bg-white dark:bg-slate-800 shadow-sm dark:border-b dark:border-slate-700 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Título/Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                     <i data-lucide="file-spreadsheet" class="h-8 w-8 text-blue-600 dark:text-blue-500"></i>
+                     <span class="ml-2 text-xl font-bold text-gray-700 dark:text-gray-200">Visor de Registros</span>
+                </div>
+                <!-- Controles: Volver y Switch de Tema -->
+                <div class="flex items-center gap-4">
+                    <a href="/" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        <i data-lucide="arrow-left" class="h-4 w-4 mr-2"></i>
+                        Volver
+                    </a>
+                    <button id="theme-toggle" type="button" class="text-gray-500 hidden dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+                        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-4" id="top">Registros de Contratos</h1>
+
+            <!-- Barra de Filtros -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 mb-6">
+                <form method="get" action="/excel" class="flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+                    <div class="relative flex-grow w-full sm:w-auto">
+                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            type="text"
+                            name="busqueda"
+                            placeholder="Buscar en la tabla..."
+                            value="{{ busqueda }}"
+                            class="w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                    <select
+                        name="estado"
+                        class="w-full sm:w-auto px-3 py-2 rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos los estados</option>
+                        <option value="encontrado" {% if estado == 'encontrado' %}selected{% endif %}>✅ Encontrados</option>
+                        <option value="no_encontrado" {% if estado == 'no_encontrado' %}selected{% endif %}>❌ No encontrados</option>
+                        <option value="sin_marcar" {% if estado == 'sin_marcar' %}selected{% endif %}>⏳ Sin marcar</option>
+                    </select>
+                    <select
+                        name="limite"
+                        class="w-full sm:w-auto px-3 py-2 rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="100" {% if limite == 100 %}selected{% endif %}>Mostrar 100</option>
+                        <option value="500" {% if limite == 500 %}selected{% endif %}>Mostrar 500</option>
+                        <option value="1000" {% if limite == 1000 %}selected{% endif %}>Mostrar 1000</option>
+                        <option value="99999" {% if limite == 99999 %}selected{% endif %}>Mostrar Todos</option>
+                    </select>
+                    <button
+                        type="submit"
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                    >
+                        <i data-lucide="filter" class="h-4 w-4 mr-2"></i> Filtrar
+                    </button>
+                </form>
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-6 text-sm text-gray-600 dark:text-gray-300">
+  <p>Total de registros: <strong>{{ total_filas }}</strong></p>
+  <div class="flex flex-wrap justify-center sm:justify-start gap-1 mt-3 sm:mt-0">
+    {% if pagina > 1 %}
+    <a href="{{ url_for('mostrar_excel', pagina=pagina-1, limite=limite, busqueda=busqueda, estado=estado) }}"
+       class="px-2 py-1 rounded-md bg-gray-700 hover:bg-gray-600 text-white">
+      «
+    </a>
+    {% endif %}
+
+    {% set rango_inicio = pagina - 2 if pagina > 3 else 1 %}
+    {% set rango_final = pagina + 2 if pagina < total_paginas - 2 else total_paginas %}
+    
+    {% if rango_inicio > 1 %}
+    <a href="{{ url_for('mostrar_excel', pagina=1, limite=limite, busqueda=busqueda, estado=estado) }}"
+       class="px-2 py-1 rounded-md bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600">
+      1
+    </a>
+    <span class="px-2 py-1 text-gray-400">...</span>
+    {% endif %}
+
+    {% for num in range(rango_inicio, rango_final + 1) %}
+    <a href="{{ url_for('mostrar_excel', pagina=num, limite=limite, busqueda=busqueda, estado=estado) }}"
+       class="px-3 py-1 rounded-md {% if num == pagina %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+
+    {% if rango_final < total_paginas %}
+    <span class="px-2 py-1 text-gray-400">...</span>
+    <a href="{{ url_for('mostrar_excel', pagina=total_paginas, limite=limite, busqueda=busqueda, estado=estado) }}"
+       class="px-2 py-1 rounded-md bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600">
+      {{ total_paginas }}
+    </a>
+    {% endif %}
+
+    {% if pagina < total_paginas %}
+    <a href="{{ url_for('mostrar_excel', pagina=pagina+1, limite=limite, busqueda=busqueda, estado=estado) }}"
+       class="px-2 py-1 rounded-md bg-gray-700 hover:bg-gray-600 text-white">
+      »
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+            </div>
+
+            <!-- Tabla de Datos -->
+            <div class="overflow-x-auto bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-gray-200 dark:border-slate-700">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                    <thead class="bg-gray-100 dark:bg-slate-700/50 text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-3 text-left tracking-wider">Cédula</th>
+                            <th class="px-6 py-3 text-left tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left tracking-wider">Contrato</th>
+                            <th class="px-6 py-3 text-left tracking-wider">Factura</th>
+                            <th class="px-6 py-3 text-left tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-center tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-slate-700 text-sm">
+                        {% for fila in filas %}
+                        <tr class="hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-colors duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-700 dark:text-gray-400">{{ fila['CEDULA'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 dark:text-white">{{ fila['NAME'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ fila['CONTRATO'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ fila['FACTURA'] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ fila['FECHA'] | format_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <div class="flex justify-center items-center space-x-2">
+                                    {% if fila.estado_marcado == 'encontrado' %}
+    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        Encontrado
+    </span>
+{% elif fila.estado_marcado == 'no_encontrado' %}
+    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+        No encontrado
+    </span>
+{% else %}
+    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-gray-300">
+        Sin marcar
+    </span>
+{% endif %}
+
+{% if fila.estado_marcado != 'encontrado' and fila.estado_marcado != 'no_encontrado' %}
+    <form action="/marcar_fila" method="POST" class="inline-block">
+        <input type="hidden" name="fila_id" value="{{ loop.index0 }}" />
+        <input type="hidden" name="accion" value="encontrado" />
+        <input type="hidden" name="cedula" value="{{ fila['CEDULA'] }}">
+        <input type="hidden" name="contrato" value="{{ fila['CONTRATO'] }}">
+        <input type="hidden" name="factura" value="{{ fila['FACTURA'] }}">
+        <button type="submit" title="Marcar como Encontrado" class="p-2 text-green-600 dark:text-green-500 hover:bg-green-100 dark:hover:bg-slate-700 rounded-full transition-all">
+            <i data-lucide="check-circle-2" class="h-5 w-5"></i>
+        </button>
+    </form>
+    <form action="/marcar_fila" method="POST" class="inline-block">
+        <input type="hidden" name="fila_id" value="{{ loop.index0 }}" />
+        <input type="hidden" name="accion" value="no_encontrado" />
+        <input type="hidden" name="cedula" value="{{ fila['CEDULA'] }}">
+        <input type="hidden" name="contrato" value="{{ fila['CONTRATO'] }}">
+        <input type="hidden" name="factura" value="{{ fila['FACTURA'] }}">
+        <button type="submit" title="Marcar como No Encontrado" class="p-2 text-red-600 dark:text-red-500 hover:bg-red-100 dark:hover:bg-slate-700 rounded-full transition-all">
+            <i data-lucide="x-circle" class="h-5 w-5"></i>
+        </button>
+    </form>
+{% endif %}
+
+                                    <div class="border-l border-gray-300 dark:border-slate-600 h-6"></div>
+                                    <form action="/buscar_fila" method="POST" class="inline-block">
+                                        {% for key in ['CEDULA', 'NAME', 'CONTRATO', 'FACTURA'] %}
+                                        <input type="hidden" name="{{ key }}" value="{{ fila[key] or '' }}" />
+                                        {% endfor %}
+                                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                                        <button type="submit" title="Buscar este registro en Alfresco" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                                            <i data-lucide="search" class="h-4 w-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Script de Modo Oscuro -->
+    <script>
+        const themeToggleButton = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const applyTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            if (themeIcon) themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+        };
+        const initialIsDark = localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        applyTheme(initialIsDark);
+        themeToggleButton.addEventListener('click', () => {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('color-theme', !isCurrentlyDark ? 'dark' : 'light');
+            applyTheme(!isCurrentlyDark);
+        });
+        lucide.createIcons();
+    </script>
+</body>
+</html>
