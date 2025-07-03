@@ -370,32 +370,37 @@ def visualizar_archivo(node_id):
 @app.route('/download/<node_id>')
 def descargar_archivo(node_id):
     response_obj = alfresco_service.get_file_content(node_id, for_inline_view=False)
-    
-    # Validar que el contenido no sea vacío o HTML
-    if response_obj and response_obj.status_code == 200:
-        contenido = response_obj.content
-        if not contenido or b'<!DOCTYPE html>' in contenido or b'<html' in contenido.lower():
-            return "Error: Archivo no disponible o corrupto en Alfresco.", 404
 
-        headers = dict(response_obj.headers)
+    if not response_obj or response_obj.status_code != 200:
+        return "Error: No se pudo obtener el archivo para descargar.", 404
 
-        filename = node_id
-        if 'Content-Disposition' in headers:
-            parts = headers['Content-Disposition'].split('filename=')
-            if len(parts) > 1:
-                filename = parts[1].strip('";')
+    # Leer todo el contenido para validarlo
+    contenido = b''.join(response_obj.iter_content(chunk_size=1024 * 1024))
 
-        if '.' not in filename:
-            filename += '.tif'
+    # Validar PDF o TIFF por encabezado
+    es_pdf = contenido.strip().startswith(b'%PDF')
+    es_tiff = contenido.strip().startswith((b'II', b'MM'))
 
-        content_type = detectar_tipo_mime(filename)
+    if not es_pdf and not es_tiff:
+        return "Error: El archivo no es un PDF ni un TIFF válido.", 404
 
-        headers['Content-Disposition'] = f'attachment; filename="{filename}"'
-        headers['Content-Type'] = content_type
+    headers = dict(response_obj.headers)
 
-        return Response(stream_with_context(response_obj.iter_content(chunk_size=1024*1024)), headers=headers)
+    # Obtener nombre real o usar node_id
+    filename = node_id
+    if 'Content-Disposition' in headers:
+        parts = headers['Content-Disposition'].split('filename=')
+        if len(parts) > 1:
+            filename = parts[1].strip('";')
 
-    return "Error: No se pudo obtener el archivo para descargar.", 404
+    # Detectar tipo MIME correcto sin forzar extensión
+    content_type = detectar_tipo_mime(filename)
+    headers = {
+        'Content-Disposition': f'attachment; filename="{filename}"',
+        'Content-Type': content_type
+    }
+
+    return Response(contenido, headers=headers)
 
 
 if __name__ == '__main__':
