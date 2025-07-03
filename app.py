@@ -370,30 +370,33 @@ def visualizar_archivo(node_id):
 @app.route('/download/<node_id>')
 def descargar_archivo(node_id):
     response_obj = alfresco_service.get_file_content(node_id, for_inline_view=False)
+    
+    # Validar que el contenido no sea vacío o HTML
     if response_obj and response_obj.status_code == 200:
+        contenido = response_obj.content
+        if not contenido or b'<!DOCTYPE html>' in contenido or b'<html' in contenido.lower():
+            return "Error: Archivo no disponible o corrupto en Alfresco.", 404
+
         headers = dict(response_obj.headers)
 
-        # Obtener el nombre del archivo desde el header o usar el node_id
         filename = node_id
         if 'Content-Disposition' in headers:
             parts = headers['Content-Disposition'].split('filename=')
             if len(parts) > 1:
                 filename = parts[1].strip('";')
 
-        # Forzar extensión .tif si no tiene
         if '.' not in filename:
             filename += '.tif'
 
-        # Detectar tipo MIME
         content_type = detectar_tipo_mime(filename)
 
-        # Forzar encabezado para descarga
         headers['Content-Disposition'] = f'attachment; filename="{filename}"'
         headers['Content-Type'] = content_type
 
         return Response(stream_with_context(response_obj.iter_content(chunk_size=1024*1024)), headers=headers)
 
     return "Error: No se pudo obtener el archivo para descargar.", 404
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=False)
