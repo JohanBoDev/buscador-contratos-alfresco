@@ -22,7 +22,6 @@ app = Flask(__name__)
 # --- CONFIGURACIÓN DE ARCHIVOS ---
 # Ruta actualizada para apuntar a tu archivo Excel en la carpeta de Descargas
 EXCEL_FILE_PATH = "SIC_FACTURAS_UNE_VERSION_FINAL.xlsx"
-
 def detectar_tipo_mime(nombre):
     tipo, _ = mimetypes.guess_type(nombre)
     return tipo or 'application/octet-stream'
@@ -237,8 +236,6 @@ def marcar_fila():
     # Redirigir de nuevo a la tabla con los mismos filtros
     return redirect(request.referrer or url_for('mostrar_excel'))
 
-
-
 # --- RUTA PARA MANEJAR LA BÚSQUEDA DESDE LA TABLA EXCEL ---
 @app.route('/buscar_fila', methods=['POST'])
 def buscar_fila_excel():
@@ -285,6 +282,32 @@ def ver_contenido_carpeta(node_id):
     if resultados is None:
         return render_template('resultados.html', resultados=[], error="No se pudo obtener el contenido de la carpeta.")
     return render_template('resultados.html', resultados=resultados, termino=f"Contenido de carpeta {node_id}")
+
+#Ruta para busqueda y descarga de archivos desde script externo
+@app.route('/api/search', methods=['POST'])
+def api_busqueda():
+    termino_busqueda_raw = request.json.get('termino', '')
+    terminos = termino_busqueda_raw.split()
+
+    if not terminos:
+        return {'error': 'No se proporcionó ningún término'}, 400
+
+    resultados = alfresco_service.buscar_archivos_generico(terminos)
+
+    if resultados is None:
+        return {'error': 'Error al conectar con Alfresco'}, 500
+
+    # Extraer solo info necesaria: nodeId y nombre
+    archivos = []
+    for r in resultados:
+        entry = r.get('entry', {})
+        if entry.get('isFile'):
+            archivos.append({
+                'nodeId': entry.get('id'),
+                'name': entry.get('name')
+            })
+
+    return {'resultados': archivos}, 200
 
 @app.route('/view/<node_id>')
 def visualizar_archivo(node_id):
